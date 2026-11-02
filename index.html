@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#06131f" />
+  <title>海冰盐度实验室 · 盐度如何决定结冰方式</title>
+  <style>:root {
+  --bg: #050f19;
+  --panel: rgba(7, 21, 34, 0.82);
+  --panel-2: rgba(9, 27, 43, 0.72);
+  --line: rgba(120, 200, 215, 0.12);
+  --line-strong: rgba(130, 220, 235, 0.22);
+  --ink: #e9fbff;
+  --muted: #8aa9b6;
+  --faint: #5d7b89;
+  --teal: #5de0d0;
+  --ice: #8edcff;
+  --blue: #6fb7ff;
+  --coral: #ff9a6b;
+  --gold: #ffc66d;
+  --green: #8fe3b0;
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --sans: Inter, "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background:
+    radial-gradient(1100px 700px at 16% -10%, rgba(24, 88, 120, 0.36), transparent 62%),
+    radial-gradient(900px 700px at 88% 8%, rgba(40, 70, 120, 0.18), transparent 60%),
+    radial-gradient(800px 600px at 50% 110%, rgba(10, 60, 80, 0.22), transparent 60%),
+    var(--bg);
+}
+
+[hidden] { display: none !important; }
+
+button, input { font: inherit; }
+button { color: inherit; }
+
+.app {
+  width: min(1700px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px 22px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 54px;
+}
+
+.brand { display: flex; align-items: center; gap: 11px; min-width: 280px; }
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(145deg, rgba(93,224,208,.94), rgba(111,183,255,.55));
+  position: relative;
+  box-shadow: 0 0 26px rgba(93, 224, 208, 0.18);
+  flex: 0 0 auto;
+}
+.brand-mark::before, .brand-mark::after, .brand-mark span {
+  content: ""; position: absolute; background: #07202b; border-radius: 2px;
+}
+.brand-mark::before { width: 18px; height: 2px; left: 10px; top: 18px; }
+.brand-mark::after { width: 2px; height: 18px; left: 18px; top: 10px; }
+.brand-mark span { width: 12px; height: 12px; left: 13px; top: 13px; border-radius: 50%; background: rgba(7,32,43,.35); border: 1px solid rgba(7,32,43,.65); }
+
+.brand h1 { margin: 0; font-size: 18px; letter-spacing: .03em; font-weight: 700; }
+.brand p { margin: 3px 0 0; font-size: 9.5px; color: var(--muted); letter-spacing: .12em; }
+
+.view-tabs {
+  display: flex; gap: 4px; padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(4, 14, 24, 0.58);
+}
+.view-tab {
+  border: 0; background: transparent; color: var(--faint);
+  padding: 8px 15px; border-radius: 8px; cursor: pointer;
+  font-size: 12px; font-weight: 600; letter-spacing: .02em;
+  transition: background .18s, color .18s;
+}
+.view-tab:hover { color: var(--ink); }
+.view-tab.active { color: #06202a; background: linear-gradient(120deg, #8fe3d3, #8edcff); }
+
+.top-meta {
+  margin-left: auto; display: flex; align-items: center; gap: 7px;
+  color: var(--faint); font-size: 10px; letter-spacing: .08em;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--teal);
+  box-shadow: 0 0 12px var(--teal);
+}
+
+/* Views */
+.view { flex: 1; min-height: 0; display: grid; gap: 12px; }
+.formation-view {
+  grid-template-columns: minmax(0, 1.55fr) minmax(340px, .85fr);
+  grid-template-rows: minmax(390px, 1fr) 224px;
+}
+.formation-view .stage-panel { grid-column: 1; grid-row: 1; }
+.formation-view .side { grid-column: 2; grid-row: 1; }
+.formation-view .bottom-panel { grid-column: 1 / -1; grid-row: 2; }
+
+.salt-view {
+  grid-template-columns: minmax(0, 1.45fr) minmax(360px, .9fr);
+  grid-template-rows: minmax(390px, 1fr) 286px;
+}
+.salt-view .stage-panel { grid-column: 1; grid-row: 1; }
+.salt-view .side { grid-column: 2; grid-row: 1; }
+.salt-view .bottom-panel { grid-column: 1 / -1; grid-row: 2; }
+
+.panel {
+  background: linear-gradient(160deg, rgba(9, 27, 43, .88), rgba(5, 17, 29, .84));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 14px 45px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255,255,255,.025);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.stage-panel { display: flex; flex-direction: column; }
+.side { display: grid; grid-template-rows: 1fr 1fr auto; gap: 10px; min-height: 0; }
+.chart-card, .readout-card { display: flex; flex-direction: column; min-height: 0; }
+
+.panel-head {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  padding: 12px 14px 8px;
+}
+.panel-head.compact { padding: 10px 12px 5px; }
+.eyebrow {
+  font-size: 8px; letter-spacing: .17em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: 2px;
+}
+.panel-head h2 { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: .01em; }
+.panel-head h3 { margin: 0; font-size: 15px; }
+.micro { color: var(--faint); font-family: var(--mono); font-size: 9px; padding-top: 3px; }
+.chart-head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.curve-key {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--faint); font-size: 8px; white-space: nowrap;
+}
+.curve-key .key { width: 6px; height: 2px; border-radius: 2px; display: inline-block; }
+.curve-key .key.blue { background: var(--blue); }
+.curve-key .key.gold { background: var(--gold); }
+
+.scene-chips { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid rgba(142, 220, 255, .16);
+  background: rgba(6, 24, 38, .66);
+  color: #b9e8f4; border-radius: 999px;
+  padding: 4px 8px; font-size: 9px; white-space: nowrap;
+}
+.chip b { color: var(--ink); font-weight: 600; }
+.chip.coral { border-color: rgba(255,154,107,.30); color: #ffd1bd; }
+
+.canvas-wrap { position: relative; min-height: 0; flex: 1; }
+.canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage-canvas-wrap { margin: 0 10px 4px; border-radius: 9px; overflow: hidden; background: rgba(3, 12, 21, .4); }
+.chart-canvas-wrap { margin: 0 6px 6px; min-height: 110px; }
+.profile-canvas-wrap { margin: 0 8px 8px; min-height: 190px; }
+
+.stage-stamp {
+  position: absolute; right: 10px; bottom: 10px;
+  font-size: 9px; color: rgba(200, 240, 250, .55);
+  background: rgba(4, 16, 27, .68);
+  border: 1px solid rgba(142, 220, 255, .10);
+  padding: 5px 8px; border-radius: 6px;
+  pointer-events: none;
+}
+.stage-footer {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  padding: 5px 14px 10px;
+  color: var(--faint); font-size: 8.5px;
+}
+.stage-footer span { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.swatch.cold { background: #2d7d9c; }
+.swatch.warm { background: #ff9a6b; }
+.swatch.ice { background: #dffaff; box-shadow: 0 0 7px rgba(223,250,255,.5); }
+.swatch.brine { background: #2f8fc0; }
+.swatch.coral { background: var(--coral); }
+
+/* Readouts */
+.readout-card { padding-bottom: 8px; }
+.readout-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  margin: 4px 10px 0; background: rgba(120,200,215,.10); border-radius: 8px; overflow: hidden;
+}
+.readout-grid > div {
+  background: rgba(6, 20, 33, .92); padding: 7px 9px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.readout-grid span { color: var(--faint); font-size: 8px; letter-spacing: .02em; }
+.readout-grid strong { font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: #dff8ff; }
+
+/* Bottom formation */
+.bottom-panel { display: grid; grid-template-columns: 1.08fr .92fr; min-height: 0; }
+.control-col, .outcome-col { padding: 0 0 9px; min-width: 0; display: flex; flex-direction: column; }
+.control-col { border-right: 1px solid var(--line); }
+.slider-row { padding: 3px 14px 4px; }
+.slider-row label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  color: var(--muted); font-size: 9px; margin-bottom: 4px;
+}
+.slider-row label b { color: var(--ink); font-family: var(--mono); font-size: 9.5px; font-weight: 500; }
+
+input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 16px; background: transparent; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 999px;
+  background: linear-gradient(90deg, rgba(93,224,208,.65), rgba(111,183,255,.35));
+}
+input[type="range"]::-moz-range-track {
+  height: 3px; border-radius: 999px; background: rgba(111,183,255,.35);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4.5px;
+  border-radius: 50%; background: #e9fbff;
+  border: 2px solid #4db6c8;
+  box-shadow: 0 0 12px rgba(93,224,208,.55);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 10px; height: 10px; border-radius: 50%; background: #e9fbff;
+  border: 2px solid #4db6c8;
+}
+
+.play-btn {
+  border: 1px solid rgba(93,224,208,.30);
+  background: rgba(93,224,208,.10);
+  color: #bff8f0; border-radius: 7px; padding: 5px 10px;
+  font-size: 9px; cursor: pointer;
+}
+.play-btn:hover { background: rgba(93,224,208,.18); }
+
+.preset-row { display: flex; gap: 6px; padding: 6px 14px 0; flex-wrap: wrap; }
+.preset {
+  border: 1px solid var(--line);
+  background: rgba(6, 22, 36, .65);
+  color: var(--muted); border-radius: 7px;
+  padding: 5px 8px; font-size: 8.5px; cursor: pointer;
+}
+.preset:hover { color: var(--ink); border-color: rgba(93,224,208,.35); }
+
+.outcome-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 0 12px; }
+.outcome-card {
+  border: 1px solid var(--line);
+  background: rgba(6, 21, 35, .55);
+  border-radius: 8px; padding: 8px 9px;
+  opacity: .58; transition: opacity .2s, border-color .2s;
+}
+.outcome-card.active { opacity: 1; border-color: rgba(93,224,208,.38); background: rgba(10, 37, 52, .62); }
+.outcome-top { display: flex; align-items: center; gap: 5px; font-size: 9px; }
+.outcome-top b { font-weight: 650; }
+.outcome-top em { margin-left: auto; color: var(--faint); font-style: normal; font-family: var(--mono); font-size: 8px; }
+.dot { width: 5px; height: 5px; border-radius: 50%; }
+.dot.teal { background: var(--teal); }
+.dot.coral { background: var(--coral); }
+.outcome-card p { margin: 5px 0 0; color: var(--muted); font-size: 8.5px; line-height: 1.55; }
+.explain {
+  margin: 7px 12px 0; padding: 7px 9px;
+  border-left: 2px solid rgba(93,224,208,.55);
+  background: rgba(93,224,208,.045);
+  color: #a9c8d2; font-size: 8.8px; line-height: 1.55;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Salt view */
+.budget-card, .control-card { padding-bottom: 9px; }
+.budget-bars { padding: 2px 12px 0; display: flex; flex-direction: column; gap: 7px; }
+.budget-row { display: grid; grid-template-columns: 62px 1fr 42px; align-items: center; gap: 7px; font-size: 8.5px; color: var(--muted); }
+.budget-row b { text-align: right; font-family: var(--mono); font-size: 9px; color: var(--ink); font-weight: 500; }
+.bar { height: 6px; background: rgba(120,200,215,.10); border-radius: 999px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ffc66d, #ff9a6b); transition: width .25s; }
+.bar i.rejected { background: linear-gradient(90deg, #5de0d0, #6fb7ff); }
+.budget-note { padding: 7px 12px 0; color: var(--faint); font-size: 8px; line-height: 1.5; }
+.budget-readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 8px 12px 0; background: rgba(120,200,215,.10); border-radius: 7px; overflow: hidden; }
+.budget-readouts > div { background: rgba(6,20,33,.9); padding: 6px 7px; display: flex; flex-direction: column; gap: 2px; }
+.budget-readouts span { color: var(--faint); font-size: 7.5px; }
+.budget-readouts strong { font-family: var(--mono); font-size: 9.5px; font-weight: 500; color: #dff8ff; }
+.fine { margin: 4px 14px 0; color: var(--faint); font-size: 8px; line-height: 1.55; }
+
+/* Observation */
+.observation-panel { grid-template-columns: 1.55fr .8fr; }
+.observation-chart { min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.observation-note { padding: 12px 14px; overflow: auto; }
+.observation-note h3 { margin: 3px 0 7px; font-size: 13px; line-height: 1.35; }
+.observation-note p { margin: 0 0 7px; color: var(--muted); font-size: 8.7px; line-height: 1.55; }
+.mode-tabs { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: rgba(4,14,24,.5); }
+.mode-tab { border: 0; background: transparent; color: var(--faint); padding: 4px 7px; border-radius: 4px; font-size: 8px; cursor: pointer; }
+.mode-tab.active { color: #062028; background: rgba(93,224,208,.78); }
+.legend-mini { display: flex; flex-wrap: wrap; gap: 9px; color: var(--faint); font-size: 7.5px; margin: 3px 0 8px; }
+.legend-mini span { display: inline-flex; align-items: center; gap: 4px; }
+.legend-mini i { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.note-callout { border: 1px solid rgba(255,198,109,.14); background: rgba(255,198,109,.045); border-radius: 7px; padding: 7px 8px; }
+.note-callout b { color: var(--gold); font-size: 8.5px; }
+.note-callout p { margin: 3px 0 0; font-size: 8px; line-height: 1.5; }
+
+.footer {
+  display: flex; justify-content: space-between; gap: 12px;
+  color: var(--faint); font-size: 8px; padding: 0 2px;
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+  .formation-view, .salt-view { grid-template-columns: minmax(0, 1.35fr) minmax(320px, .9fr); }
+  .app { padding: 14px 14px 10px; }
+}
+
+@media (max-width: 960px) {
+  .app { padding: 12px 10px 8px; gap: 9px; }
+  .topbar { flex-wrap: wrap; gap: 9px; }
+  .brand { min-width: 0; }
+  .top-meta { display: none; }
+  .view-tabs { margin-left: auto; }
+  .formation-view, .salt-view {
+    grid-template-columns: 1fr;
+    grid-template-rows: 420px auto auto;
+  }
+  .formation-view .stage-panel, .salt-view .stage-panel { grid-column: 1; grid-row: 1; }
+  .formation-view .side, .salt-view .side { grid-column: 1; grid-row: 2; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+  .formation-view .readout-card { grid-column: 1 / -1; }
+  .salt-view .budget-card { grid-column: 1 / -1; }
+  .formation-view .bottom-panel, .salt-view .bottom-panel { grid-column: 1; grid-row: 3; }
+  .bottom-panel, .observation-panel { grid-template-columns: 1fr; }
+  .control-col { border-right: 0; border-bottom: 1px solid var(--line); }
+  .observation-chart { border-right: 0; border-bottom: 1px solid var(--line); }
+  .observation-panel { grid-template-columns: 1fr; }
+  .stage-canvas-wrap { min-height: 320px; }
+  .salt-view { grid-template-rows: 430px auto auto; }
+  .salt-view .stage-canvas-wrap { min-height: 330px; }
+  .observation-panel { min-height: 0; }
+  .profile-canvas-wrap { min-height: 190px; }
+}
+
+@media (max-width: 640px) {
+  .app { padding: 10px 8px 6px; }
+  .topbar { align-items: flex-start; }
+  .brand h1 { font-size: 16px; }
+  .brand p { font-size: 8px; }
+  .brand-mark { width: 32px; height: 32px; }
+  .view-tabs { width: 100%; order: 3; }
+  .view-tab { flex: 1; padding: 7px 8px; font-size: 10.5px; }
+  .formation-view, .salt-view { grid-template-rows: 380px auto auto; }
+  .stage-canvas-wrap { min-height: 280px; }
+  .salt-view { grid-template-rows: 390px auto auto; }
+  .formation-view .side, .salt-view .side { grid-template-columns: 1fr; }
+  .formation-view .readout-card, .salt-view .budget-card { grid-column: 1; }
+  .chart-canvas-wrap { min-height: 150px; }
+  .outcome-cards { grid-template-columns: 1fr; }
+  .outcome-card p { font-size: 9px; }
+  .panel-head h2 { font-size: 13px; }
+  .stage-footer { font-size: 8px; gap: 8px; }
+  .mode-tabs { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span></div>
+        <div>
+          <h1>海冰盐度实验室</h1>
+          <p>盐度 · 密度 · 结冰方式 · 盐析</p>
+        </div>
+      </div>
+
+      <nav class="view-tabs" aria-label="实验视图">
+        <button class="view-tab active" data-view="formation" type="button">形成过程</button>
+        <button class="view-tab" data-view="salt" type="button">盐析与观测</button>
+      </nav>
+
+      <div class="top-meta">
+        <span class="live-dot"></span>
+        <span>二维概念模型</span>
+      </div>
+    </header>
+
+    <main class="view formation-view" id="formation-view">
+      <section class="panel stage-panel">
+        <div class="panel-head">
+          <div>
+            <div class="eyebrow">01 · 水体剖面</div>
+            <h2 id="formation-title">冷却、分层与结冰</h2>
+          </div>
+          <div class="scene-chips">
+            <span class="chip" id="chip-regime">高盐度</span>
+            <span class="chip" id="chip-state">未结冰</span>
+          </div>
+        </div>
+        <div class="canvas-wrap stage-canvas-wrap">
+          <canvas id="column-canvas" aria-label="海水剖面：温度、混合层、对流与海冰"></canvas>
+          <div class="stage-stamp" id="stage-stamp">拖动下方“冷却进度”</div>
+        </div>
+        <div class="stage-footer">
+          <span><i class="swatch cold"></i>冷海水</span>
+          <span><i class="swatch warm"></i>暖海水</span>
+          <span><i class="swatch ice"></i>海冰</span>
+          <span><i class="swatch brine"></i>卤水/盐</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel chart-card">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">诊断 1</div>
+              <h2>T–S 区域图</h2>
+            </div>
+            <div class="chart-head-right">
+              <span class="micro" id="ts-note">Tρmax &gt; Tf</span>
+              <span class="curve-key"><i class="key blue"></i>Tf <i class="key gold"></i>Tρmax</span>
+            </div>
+          </div>
+          <div class="canvas-wrap chart-canvas-wrap">
+            <canvas id="ts-canvas" aria-label="温度-盐度图"></canvas>
+          </div>
+        </section>
+
+        <section class="panel chart-card">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">诊断 2</div>
+              <h2>密度—温度曲线</h2>
+            </div>
+            <span class="micro" id="density-note">冷却增密</span>
+          </div>
+          <div class="canvas-wrap chart-canvas-wrap">
+            <canvas id="density-canvas" aria-label="密度随温度变化曲线"></canvas>
+          </div>
+        </section>
+
+        <section class="panel readout-card">
+          <div class="readout-grid">
+            <div><span>冰点 Tf</span><strong id="ro-tf">—</strong></div>
+            <div><span>最大密度 Tρmax</span><strong id="ro-tmax">—</strong></div>
+            <div><span>上下密度差</span><strong id="ro-drho">—</strong></div>
+            <div><span>混合层深度</span><strong id="ro-hmix">—</strong></div>
+            <div><span>冰厚倾向</span><strong id="ro-ice">—</strong></div>
+            <div><span>当前状态</span><strong id="ro-state">—</strong></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="panel bottom-panel">
+        <div class="control-col">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">控制</div>
+              <h2>改变盐度，观察冷却路径</h2>
+            </div>
+            <button class="play-btn" id="btn-play" type="button" aria-label="播放冷却动画">▶ 冷却</button>
+          </div>
+
+          <div class="slider-row">
+            <label for="salinity-slider">盐度 S <b id="salinity-out">5.0 psu</b></label>
+            <input id="salinity-slider" type="range" min="0" max="35" step="0.5" value="5" />
+          </div>
+          <div class="slider-row">
+            <label for="temp-slider">初始水温 <b id="temp-out">6.0 °C</b></label>
+            <input id="temp-slider" type="range" min="1" max="8" step="0.5" value="6" />
+          </div>
+          <div class="slider-row">
+            <label for="cool-slider">冷却进度 <b id="cool-out">0%</b></label>
+            <input id="cool-slider" type="range" min="0" max="100" step="1" value="0" />
+          </div>
+
+          <div class="preset-row">
+            <button class="preset" data-preset="low" type="button">低盐度 · 薄冰</button>
+            <button class="preset" data-preset="critical" type="button">临界 · 24.7</button>
+            <button class="preset" data-preset="high" type="button">高盐度 · 厚冰</button>
+          </div>
+        </div>
+
+        <div class="outcome-col">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">对比</div>
+              <h2 id="outcome-title">当前：低盐度</h2>
+            </div>
+          </div>
+          <div class="outcome-cards">
+            <article class="outcome-card" id="card-low">
+              <div class="outcome-top"><span class="dot teal"></span><b>低盐度</b><em>S &lt; 24.7</em></div>
+              <p>冷却越过最大密度点后，表层变轻并稳定；只有薄层结冰，冰层薄。</p>
+            </article>
+            <article class="outcome-card" id="card-high">
+              <div class="outcome-top"><span class="dot coral"></span><b>高盐度</b><em>S &gt; 24.7</em></div>
+              <p>冷却一直增密，对流把混合层带深；整体接近冰点后结冰，冰层厚。</p>
+            </article>
+          </div>
+          <div class="explain" id="explain-text">
+            当前 S=5.0，小于临界盐度 24.7。继续冷却时会先混合，越过最大密度温度后表层变轻，形成稳定薄层。
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <main class="view salt-view" id="salt-view" hidden>
+      <section class="panel stage-panel">
+        <div class="panel-head">
+          <div>
+            <div class="eyebrow">02 · 盐析</div>
+            <h2>海冰排盐与卤水泡</h2>
+          </div>
+          <div class="scene-chips">
+            <span class="chip">冰龄 <b id="chip-age">1.0 年</b></span>
+            <span class="chip">冰盐度 <b id="chip-sice">6.2 psu</b></span>
+          </div>
+        </div>
+        <div class="canvas-wrap stage-canvas-wrap">
+          <canvas id="ice-canvas" aria-label="海冰卤水泡和排盐过程"></canvas>
+        </div>
+        <div class="stage-footer">
+          <span><i class="swatch ice"></i>海冰</span>
+          <span><i class="swatch brine"></i>卤水泡</span>
+          <span><i class="swatch coral"></i>排出盐</span>
+          <span>冰龄越老，卤水泡越少，冰盐度越低</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel chart-card">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">诊断</div>
+              <h2>冰盐度随冰龄变化</h2>
+            </div>
+            <span class="micro">7 → 3 psu</span>
+          </div>
+          <div class="canvas-wrap chart-canvas-wrap">
+            <canvas id="ice-chart-canvas" aria-label="冰盐度随冰龄变化"></canvas>
+          </div>
+        </section>
+
+        <section class="panel budget-card">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">盐量收支</div>
+              <h2>盐去了哪里？</h2>
+            </div>
+          </div>
+          <div class="budget-bars">
+            <div class="budget-row">
+              <span>留在冰内</span>
+              <div class="bar"><i id="bar-retained"></i></div>
+              <b id="budget-retained">—</b>
+            </div>
+            <div class="budget-row">
+              <span>排入海水</span>
+              <div class="bar"><i id="bar-rejected" class="rejected"></i></div>
+              <b id="budget-rejected">—</b>
+            </div>
+          </div>
+          <div class="budget-note" id="budget-note">
+            冰盐度远低于海水，大部分盐被排出，进入上层海水。
+          </div>
+          <div class="budget-readouts">
+            <div><span>上层盐度</span><strong id="ro-ocean-s">34.00 psu</strong></div>
+            <div><span>盐析增量</span><strong id="ro-ds">+0.00</strong></div>
+            <div><span>冰厚</span><strong>1.0 m</strong></div>
+          </div>
+        </section>
+
+        <section class="panel control-card">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">控制</div>
+              <h2>拖动冰龄</h2>
+            </div>
+          </div>
+          <div class="slider-row">
+            <label for="age-slider">冰龄 <b id="age-out">1.0 年</b></label>
+            <input id="age-slider" type="range" min="0" max="5" step="0.1" value="1" />
+          </div>
+          <p class="fine">
+            卤水泡逐渐破裂、排水，冰盐度下降；排出的盐进入上层海水。真实冰盐度还受冰温、卤水体积和排水通道影响。
+          </p>
+        </section>
+      </aside>
+
+      <section class="panel bottom-panel observation-panel">
+        <div class="observation-chart">
+          <div class="panel-head compact">
+            <div>
+              <div class="eyebrow">观测补充</div>
+              <h2>极地上层海水盐度剖面</h2>
+            </div>
+            <div class="mode-tabs" id="profile-modes">
+              <button class="mode-tab active" data-mode="observed" type="button">观测</button>
+              <button class="mode-tab" data-mode="freezing" type="button">结冰期</button>
+              <button class="mode-tab" data-mode="melting" type="button">融化期</button>
+            </div>
+          </div>
+          <div class="canvas-wrap profile-canvas-wrap">
+            <canvas id="profile-canvas" aria-label="盐度随深度变化剖面"></canvas>
+          </div>
+        </div>
+        <div class="observation-note">
+          <div class="eyebrow">怎么读</div>
+          <h3>盐析会让表层变咸，融冰会让表层变淡</h3>
+          <p id="profile-note">
+            60°S 观测剖面表层淡、深层咸，是融冰淡水、降水、结冰排盐和混合共同作用的结果。它不能简单解释为“盐析造成”。
+          </p>
+          <div class="legend-mini">
+            <span><i style="background:#ff9db5"></i>0°</span>
+            <span><i style="background:#ffc66d"></i>20°S</span>
+            <span><i style="background:#8fe3b0"></i>40°S</span>
+            <span><i style="background:#6fb7ff"></i>60°S</span>
+            <span><i style="background:#ff9a6b"></i>结冰期</span>
+            <span><i style="background:#5de0d0"></i>融化期</span>
+          </div>
+          <div class="note-callout">
+            <b>关键关系</b>
+            <p>结冰排盐 → 表层盐度升高、密度增大，可能触发对流；融冰/降水 → 表层变淡、层结更稳定。观测剖面是两者的季节平衡。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>概念模型 · 非海冰预报</span>
+      <span>近似 Tf(S)、Tρmax(S)；冰厚以“薄/中/厚”示意</span>
+    </footer>
+  </div>
+
+  <script>(()=>{var A=(o,n,t)=>Math.min(t,Math.max(n,o)),dt=(o,n,t)=>o+(n-o)*t;function F(o){let n=A(o,0,40);return-.0575*n+.001710523*Math.pow(n,1.5)-.0002154996*n*n}function _(o){return 3.98-.215*A(o,0,40)}function D(o,n){let t=_(n);return 1e3+.8*A(n,0,40)-.02*(o-t)**2}function ht(){let o=0,n=40;for(let t=0;t<60;t++){let e=(o+n)/2;_(e)>F(e)?o=e:n=e}return(o+n)/2}var I=ht();function bt(o,n,t){let e=D(o,n)-D(t,n);return e<=0?20:20+180*A(e/.12,0,1)}function ot(o,n,t){let e=F(o),s=_(o),i=D(n,o),l=D(t,o),a=i-l,r=bt(n,o,t),p=Math.abs(a)<.001,c=a<-.001||p&&n<s,f=n<=e+.002,d=f?A((e-n+.012)/.2,0,1):0,x=A((r-20)/180,0,1),y=o<I?"low":"high",w=x<.28?"\u8584\u51B0":x<.66?"\u4E2D\u7B49":"\u539A\u51B0";return{S:o,T:n,T0:t,tf:e,tMax:s,rho:i,rho0:l,dRho:a,hMix:r,stable:c,freezing:f,iceFraction:d,iceIndex:x,iceLabel:w,regime:y,supercooling:Math.max(0,e-n)}}function N(o){let n=A(o,0,5);return dt(7,3,n/5)}function nt(o,n,t,e){let s=N(e),i=A((o-s)/o,0,1),l=i,a=1-l,r=(o-s)*(917/1025)*(n/Math.max(5,t));return{Sice:s,fractionRejected:i,rejectedSalt:l,retainedSalt:a,surfaceDeltaS:r}}var xt=[0,25,50,100,200,500,1e3,1500,2e3],Q={observed:{0:[35.45,35.4,35.32,35.16,34.98,34.78,34.7,34.68,34.68],20:[35.35,35.3,35.22,35.06,34.9,34.76,34.7,34.68,34.68],40:[34.95,34.91,34.86,34.78,34.73,34.7,34.68,34.68,34.68],60:[34.42,34.44,34.48,34.55,34.62,34.68,34.7,34.7,34.7]},freezing:{60:[34.78,34.78,34.77,34.75,34.73,34.7,34.7,34.7,34.7]},melting:{60:[34.02,34.1,34.22,34.4,34.55,34.66,34.7,34.7,34.7]}};function X(o,n="observed"){let e=(Q[n]||Q.observed)[o]||Q.observed[o];return xt.map((s,i)=>({depth:s,salinity:e[i]}))}var it=[{key:"0",label:"0\xB0",color:"#ff9db5"},{key:"20",label:"20\xB0S",color:"#ffc66d"},{key:"40",label:"40\xB0S",color:"#8fe3b0"},{key:"60",label:"60\xB0S",color:"#6fb7ff"}];var L='Inter, "Microsoft YaHei", "PingFang SC", sans-serif',pt='"JetBrains Mono", "SFMono-Regular", Consolas, monospace';function G(o){let n=Math.min(2,window.devicePixelRatio||1),t=o.getBoundingClientRect(),e=Math.max(10,t.width),s=Math.max(10,t.height),i=Math.round(e*n),l=Math.round(s*n);(o.width!==i||o.height!==l)&&(o.width=i,o.height=l);let a=o.getContext("2d");return a.setTransform(n,0,0,n,0,0),a.clearRect(0,0,e,s),{ctx:a,w:e,h:s}}function St(o,n=4){let t=o/n,e=10**Math.floor(Math.log10(t)),s=t/e;return(s<=1?1:s<=2?2:s<=5?5:10)*e}function mt(o,n,t,e,s,i){let l=Math.min(i,e/2,s/2);o.beginPath(),o.moveTo(n+l,t),o.arcTo(n+e,t,n+e,t+s,l),o.arcTo(n+e,t+s,n,t+s,l),o.arcTo(n,t+s,n,t,l),o.arcTo(n,t,n+e,t,l),o.closePath()}function U(o,n,t,e,s,i="rgba(4,16,27,.82)",l=`9px ${L}`){o.font=l;let a=o.measureText(n).width+10;mt(o,t-a/2,e-8,a,16,5),o.fillStyle=i,o.fill(),o.fillStyle=s,o.textAlign="center",o.textBaseline="middle",o.fillText(n,t,e+.5)}var z=class{constructor(n){this.canvas=n,this.onPickS=null,this.dragging=!1,n.addEventListener("pointerdown",t=>{this.dragging=!0,n.setPointerCapture(t.pointerId),this.pick(t)}),n.addEventListener("pointerup",()=>this.dragging=!1),n.addEventListener("pointermove",t=>{this.dragging&&this.pick(t)})}pick(n){if(!this.onPickS)return;let t=this.canvas.getBoundingClientRect(),e=n.clientX-t.left,s=this.m;if(!s)return;let i=(e-s.l)/(t.width-s.l-s.r)*35;this.onPickS(Math.max(0,Math.min(35,i)))}draw(n){let{ctx:t,w:e,h:s}=G(this.canvas);if(e<40||s<40)return;let i=this.m={l:42,r:14,t:18,b:30},l=e-i.l-i.r,a=s-i.t-i.b,r=n.S,p=n.T,c=x=>i.l+x/35*l,f=x=>i.t+(8-x)/12*a;t.fillStyle="rgba(6,18,30,.62)",t.fillRect(i.l,i.t,l,a),t.fillStyle="rgba(93,224,208,.045)",t.fillRect(i.l,i.t,c(I)-i.l,a),t.fillStyle="rgba(255,154,107,.05)",t.fillRect(c(I),i.t,i.l+l-c(I),a),t.strokeStyle="rgba(255,255,255,.18)",t.setLineDash([3,4]),t.beginPath(),t.moveTo(c(I),i.t),t.lineTo(c(I),i.t+a),t.stroke(),t.setLineDash([]),t.font=`9px ${L}`,t.textAlign="center",t.textBaseline="top";for(let x=0;x<=35;x+=5){let y=c(x);t.strokeStyle="rgba(120,190,205,.07)",t.beginPath(),t.moveTo(y,i.t),t.lineTo(y,i.t+a),t.stroke(),t.fillStyle="rgba(170,205,215,.52)",t.fillText(String(x),y,i.t+a+7)}t.textAlign="right",t.textBaseline="middle";for(let x=-4;x<=8;x+=2){let y=f(x);t.strokeStyle="rgba(120,190,205,.07)",t.beginPath(),t.moveTo(i.l,y),t.lineTo(i.l+l,y),t.stroke(),t.fillStyle="rgba(170,205,215,.52)",t.fillText(String(x),i.l-7,y)}let d=(x,y,w)=>{t.beginPath();for(let u=0;u<=140;u++){let b=u/140*35,m=x(b);u===0?t.moveTo(c(b),f(m)):t.lineTo(c(b),f(m))}t.strokeStyle=y,t.lineWidth=w,t.stroke()};d(F,"rgba(111,183,255,.95)",2),d(_,"rgba(255,198,109,.95)",2),t.beginPath(),t.arc(c(I),f(F(I)),3.4,0,Math.PI*2),t.fillStyle="#f4feff",t.fill(),t.font=`8px ${pt}`,t.textAlign="center",t.textBaseline="bottom",t.fillStyle="rgba(244,254,255,.60)",t.fillText("S* 24.7",c(I),i.t+a-4),t.strokeStyle="rgba(244,254,255,.20)",t.setLineDash([2,4]),t.beginPath(),t.moveTo(c(r),i.t),t.lineTo(c(r),i.t+a),t.moveTo(i.l,f(p)),t.lineTo(i.l+l,f(p)),t.stroke(),t.setLineDash([]),t.beginPath(),t.arc(c(r),f(p),5,0,Math.PI*2),t.fillStyle="#5de0d0",t.shadowColor="#5de0d0",t.shadowBlur=12,t.fill(),t.shadowBlur=0,t.beginPath(),t.arc(c(r),f(F(r)),2.6,0,Math.PI*2),t.fillStyle="#6fb7ff",t.fill(),t.beginPath(),t.arc(c(r),f(_(r)),2.6,0,Math.PI*2),t.fillStyle="#ffc66d",t.fill(),t.font=`600 9px ${L}`,t.textAlign="left",t.fillStyle="rgba(225,246,250,.72)",t.fillText("\u4F4E\u76D0\u5EA6",i.l+8,i.t+12),t.fillStyle="rgba(255,210,188,.72)",t.fillText("\u9AD8\u76D0\u5EA6",i.l+l-48,i.t+12),t.strokeStyle="rgba(160,220,230,.20)",t.strokeRect(i.l,i.t,l,a),t.fillStyle="rgba(180,220,230,.58)",t.font=`9px ${L}`,t.textAlign="center",t.fillText("\u76D0\u5EA6 S / psu",i.l+l/2,s-7)}},W=class{constructor(n){this.canvas=n}draw(n){let{ctx:t,w:e,h:s}=G(this.canvas);if(e<40||s<40)return;let i={l:46,r:14,t:16,b:28},l=e-i.l-i.r,a=s-i.t-i.b,r=n.S,p=[];for(let u=0;u<=120;u++)p.push(D(-4+u/120*12,r));let c=Math.min(...p)-.05,f=Math.max(...p)+.05,d=u=>i.l+(u+4)/12*l,x=u=>i.t+(f-u)/(f-c)*a;t.fillStyle="rgba(6,18,30,.62)",t.fillRect(i.l,i.t,l,a),t.fillStyle="rgba(255,154,107,.05)",t.fillRect(d(n.tMax),i.t,i.l+l-d(n.tMax),a),t.fillStyle="rgba(93,224,208,.045)",t.fillRect(i.l,i.t,d(n.tMax)-i.l,a),t.font=`9px ${L}`,t.textAlign="center",t.textBaseline="top";for(let u=-4;u<=8;u+=2){let b=d(u);t.strokeStyle="rgba(120,190,205,.07)",t.beginPath(),t.moveTo(b,i.t),t.lineTo(b,i.t+a),t.stroke(),t.fillStyle="rgba(170,205,215,.52)",t.fillText(String(u),b,i.t+a+7)}let y=St(f-c,4),w=Math.ceil(c/y)*y;t.textAlign="right",t.textBaseline="middle";for(let u=w;u<=f;u+=y){let b=x(u);t.strokeStyle="rgba(120,190,205,.07)",t.beginPath(),t.moveTo(i.l,b),t.lineTo(i.l+l,b),t.stroke(),t.fillStyle="rgba(170,205,215,.52)",t.fillText(u.toFixed(2),i.l-6,b)}t.beginPath();for(let u=0;u<=120;u++){let b=-4+u/120*12,m=d(b),M=x(D(b,r));u===0?t.moveTo(m,M):t.lineTo(m,M)}if(t.strokeStyle="#ffc66d",t.lineWidth=2,t.stroke(),t.beginPath(),t.arc(d(n.tMax),x(D(n.tMax,r)),3.4,0,Math.PI*2),t.fillStyle="#ffc66d",t.fill(),t.strokeStyle="rgba(111,183,255,.55)",t.setLineDash([3,4]),t.beginPath(),t.moveTo(d(n.tf),i.t),t.lineTo(d(n.tf),i.t+a),t.stroke(),t.setLineDash([]),t.beginPath(),t.arc(d(n.T),x(n.rho),5,0,Math.PI*2),t.fillStyle="#5de0d0",t.shadowColor="#5de0d0",t.shadowBlur=10,t.fill(),t.shadowBlur=0,n.T>n.tf+.02){let b=d(n.T+-.9),m=x(D(n.T+-1*.9,r));t.strokeStyle="rgba(244,254,255,.70)",t.lineWidth=1.4,t.beginPath(),t.moveTo(d(n.T),x(n.rho)),t.lineTo(b,m),t.stroke(),t.beginPath(),t.moveTo(b,m),t.lineTo(b- -6,m-3),t.lineTo(b- -6,m+3),t.closePath(),t.fillStyle="rgba(244,254,255,.70)",t.fill()}else U(t,"\u5DF2\u5230\u51B0\u70B9",d(n.T),x(n.rho)-15,"#6fb7ff");t.font=`600 9px ${L}`,t.textAlign="center",t.fillStyle="#ffc66d",t.fillText("\u6700\u5927\u5BC6\u5EA6",d(n.tMax),i.t+12),t.fillStyle="#6fb7ff",t.fillText("\u51B0\u70B9",d(n.tf),i.t+12),t.strokeStyle="rgba(160,220,230,.20)",t.strokeRect(i.l,i.t,l,a),t.fillStyle="rgba(180,220,230,.58)",t.font=`9px ${L}`,t.fillText("\u6E29\u5EA6 t / \xB0C",i.l+l/2,s-7)}},j=class{constructor(n){this.canvas=n}draw(n){let{ctx:t,w:e,h:s}=G(this.canvas);if(e<40||s<40)return;let i={l:42,r:14,t:16,b:28},l=e-i.l-i.r,a=s-i.t-i.b,r=f=>i.l+f/5*l,p=f=>i.t+(8-f)/6*a;t.fillStyle="rgba(6,18,30,.62)",t.fillRect(i.l,i.t,l,a),t.font=`9px ${L}`,t.textAlign="center",t.textBaseline="top";for(let f=0;f<=5;f++)t.fillStyle="rgba(170,205,215,.52)",t.fillText(String(f),r(f),i.t+a+7),t.strokeStyle="rgba(120,190,205,.07)",t.beginPath(),t.moveTo(r(f),i.t),t.lineTo(r(f),i.t+a),t.stroke();t.textAlign="right",t.textBaseline="middle";for(let f=2;f<=8;f+=2)t.fillStyle="rgba(170,205,215,.52)",t.fillText(String(f),i.l-6,p(f)),t.strokeStyle="rgba(120,190,205,.07)",t.beginPath(),t.moveTo(i.l,p(f)),t.lineTo(i.l+l,p(f)),t.stroke();t.fillStyle="rgba(255,154,107,.07)",t.fillRect(i.l,p(35),l,2),t.fillStyle="rgba(255,154,107,.55)",t.font=`8px ${L}`,t.textAlign="left",t.fillText("\u6D77\u6C34 34\u201335",i.l+8,i.t+11),t.beginPath();for(let f=0;f<=100;f++){let d=f/100*5,x=r(d),y=p(N(d));f===0?t.moveTo(x,y):t.lineTo(x,y)}t.strokeStyle="#8fe3b0",t.lineWidth=2,t.stroke();let c=N(n);t.beginPath(),t.arc(r(n),p(c),5,0,Math.PI*2),t.fillStyle="#f4feff",t.shadowColor="#8fe3b0",t.shadowBlur=10,t.fill(),t.shadowBlur=0,U(t,`${c.toFixed(1)} psu`,r(n),p(c)-14,"#8fe3b0"),t.strokeStyle="rgba(160,220,230,.20)",t.strokeRect(i.l,i.t,l,a),t.fillStyle="rgba(180,220,230,.58)",t.font=`9px ${L}`,t.textAlign="center",t.fillText("\u51B0\u9F84 / \u5E74",i.l+l/2,s-7)}},Y=class{constructor(n){this.canvas=n,this.mode="observed"}draw(n=this.mode){this.mode=n;let{ctx:t,w:e,h:s}=G(this.canvas);if(e<40||s<40)return;let i={l:46,r:18,t:20,b:30},l=e-i.l-i.r,a=s-i.t-i.b,r=d=>i.l+(d-34)/3*l,p=d=>i.t+d/2e3*a;t.fillStyle="rgba(6,18,30,.62)",t.fillRect(i.l,i.t,l,a),t.font=`9px ${L}`,t.textAlign="center",t.textBaseline="top";for(let d=34;d<=37;d+=.5){let x=r(d);t.strokeStyle="rgba(120,190,205,.08)",t.beginPath(),t.moveTo(x,i.t),t.lineTo(x,i.t+a),t.stroke(),t.fillStyle="rgba(170,205,215,.52)",t.fillText(d.toFixed(1),x,i.t+a+7)}t.textAlign="right",t.textBaseline="middle";for(let d=0;d<=2e3;d+=250){let x=p(d);t.strokeStyle="rgba(120,190,205,.08)",t.beginPath(),t.moveTo(i.l,x),t.lineTo(i.l+l,x),t.stroke(),t.fillStyle="rgba(170,205,215,.52)",t.fillText(String(d),i.l-7,x)}let c=(d,x,y,w=[])=>{t.beginPath(),d.forEach((u,b)=>{let m=r(u.salinity),M=p(u.depth);b===0?t.moveTo(m,M):t.lineTo(m,M)}),t.strokeStyle=x,t.lineWidth=y,t.setLineDash(w),t.stroke(),t.setLineDash([])};n!=="observed"&&c(X("60",n),n==="freezing"?"#ff9a6b":"#5de0d0",2.2,[4,4]);for(let d of it)c(X(d.key,"observed"),d.key==="60"?"#6fb7ff":d.color,d.key==="60"?2.6:1.35,d.key==="60"?[]:[3,3]);let f=X("60","observed")[0];t.beginPath(),t.arc(r(f.salinity),p(0),4,0,Math.PI*2),t.fillStyle="#f4feff",t.shadowColor="#6fb7ff",t.shadowBlur=10,t.fill(),t.shadowBlur=0,U(t,"60\xB0S \u8868\u5C42",r(f.salinity),p(70),"#6fb7ff"),t.strokeStyle="rgba(160,220,230,.20)",t.strokeRect(i.l,i.t,l,a),t.fillStyle="rgba(180,220,230,.58)",t.font=`9px ${L}`,t.textAlign="center",t.fillText("\u76D0\u5EA6 / psu",i.l+l/2,s-7),t.save(),t.translate(11,i.t+a/2),t.rotate(-Math.PI/2),t.fillText("\u6DF1\u5EA6 / m",0,0),t.restore()}};var R='Inter, "Microsoft YaHei", "PingFang SC", sans-serif',H='"JetBrains Mono", "SFMono-Regular", Consolas, monospace';function lt(o){let n=Math.min(2,window.devicePixelRatio||1),t=o.getBoundingClientRect(),e=Math.max(10,t.width),s=Math.max(10,t.height),i=Math.round(e*n),l=Math.round(s*n);(o.width!==i||o.height!==l)&&(o.width=i,o.height=l);let a=o.getContext("2d");return a.setTransform(n,0,0,n,0,0),a.clearRect(0,0,e,s),{ctx:a,w:e,h:s}}function K(o,n,t,e,s,i,l=1.4,a=6){let r=Math.atan2(s-t,e-n);o.strokeStyle=i,o.lineWidth=l,o.beginPath(),o.moveTo(n,t),o.lineTo(e,s),o.stroke(),o.fillStyle=i,o.beginPath(),o.moveTo(e,s),o.lineTo(e-a*Math.cos(r-.5),s-a*Math.sin(r-.5)),o.lineTo(e-a*Math.cos(r+.5),s-a*Math.sin(r+.5)),o.closePath(),o.fill()}function rt(o,n,t,e,s){o.beginPath(),o.arc(n,t,e,0,Math.PI*2),o.fillStyle=s,o.fill()}function $(o,n,t,e,s,i="left",l=`10px ${R}`){o.font=l,o.textAlign=i,o.textBaseline="middle",o.fillStyle=s,o.fillText(n,t,e)}function tt(o,n,t,e,s,i="rgba(4,16,27,.82)"){o.font=`600 9px ${R}`;let l=o.measureText(n).width+12,a=18;o.fillStyle=i,o.beginPath(),o.roundRect?.(t-l/2,e-a/2,l,a,6),o.roundRect||o.rect(t-l/2,e-a/2,l,a),o.fill(),o.fillStyle=s,o.textAlign="center",o.textBaseline="middle",o.fillText(n,t,e+.5)}function et(o,n,t=0){let{ctx:e,w:s,h:i}=lt(o);if(s<80||i<80)return;let l=Math.max(36,i*.1),r=42,p=s-14,c=l+8,f=i-22,d=f-c,x=n.hMix/200*d,y=n.iceFraction*(4+n.iceIndex*40),w=e.createLinearGradient(0,0,0,l+8);w.addColorStop(0,"rgba(10, 30, 48, .95)"),w.addColorStop(1,"rgba(14, 50, 72, .78)"),e.fillStyle=w,e.fillRect(0,0,s,l+8);for(let T=0;T<26;T++){let v=(T*97+t*6)%(s-20)+10,P=(T*53+t*10)%(l-6)+3;e.beginPath(),e.arc(v,P,1.1,0,Math.PI*2),e.fillStyle="rgba(210,245,255,.34)",e.fill()}$(e,"\u5927\u6C14 \xB7 \u6301\u7EED\u5931\u70ED",r+4,15,"rgba(210,245,255,.72)","left",`600 10px ${R}`),K(e,p-42,9,p-42,l-2,"rgba(111,183,255,.85)",1.6,6);let u=n.T,b=e.createLinearGradient(0,c,0,f);b.addColorStop(0,u>n.tf?"rgba(31, 116, 142, .92)":"rgba(22, 86, 116, .95)"),b.addColorStop(.5,"rgba(12, 58, 85, .96)"),b.addColorStop(1,"rgba(7, 34, 55, .98)"),e.fillStyle=b,e.fillRect(r,c,p-r,d),e.strokeStyle="rgba(120,200,220,.18)",e.strokeRect(r,c,p-r,d),e.font=`9px ${H}`,e.textAlign="right",e.textBaseline="middle";for(let T=0;T<=200;T+=50){let v=c+T/200*d;e.strokeStyle="rgba(170,225,235,.08)",e.beginPath(),e.moveTo(r,v),e.lineTo(p,v),e.stroke(),e.fillStyle="rgba(180,220,230,.50)",e.fillText(String(T),r-8,v)}e.save(),e.translate(10,c+d/2),e.rotate(-Math.PI/2),e.textAlign="center",e.fillStyle="rgba(180,220,230,.52)",e.fillText("\u6DF1\u5EA6 / m",0,0),e.restore();let m=c+Math.min(d,Math.max(3,x));e.fillStyle=n.stable?"rgba(93,224,208,.08)":"rgba(255,154,107,.07)",e.fillRect(r,c,p-r,Math.max(2,m-c)),e.strokeStyle=n.stable?"rgba(93,224,208,.58)":"rgba(255,154,107,.58)",e.setLineDash([4,4]),e.beginPath(),e.moveTo(r+4,m),e.lineTo(p-4,m),e.stroke(),e.setLineDash([]);let M=m>f-34?c+14:Math.max(c+12,m-10);$(e,`\u6DF7\u5408\u5C42 ${Math.round(n.hMix)} m`,p-8,M,n.stable?"#8fe3b0":"#ffb08c","right",`600 10px ${R}`),m<f-22&&($(e,"\u4E0B\u5C42\u6D77\u6C34",r+10,f-14,"rgba(190,230,238,.55)","left",`10px ${R}`),$(e,`T ${n.T0.toFixed(1)}\xB0C`,r+10,f-34,"rgba(190,230,238,.35)","left",`9px ${H}`)),$(e,`S ${n.S.toFixed(1)} psu`,r+10,c+18,"rgba(230,250,255,.75)","left",`10px ${R}`),$(e,`T ${n.T.toFixed(1)}\xB0C`,r+10,c+36,"rgba(230,250,255,.55)","left",`9px ${H}`);let V=Math.round(18+n.S*1.2);for(let T=0;T<V;T++){let v=r+26+(T*73+17)%Math.max(20,p-r-46),P=c+18+(T*47+11)%Math.max(20,d-30);rt(e,v,P,1.3+n.S/35*1.1,"rgba(190,245,255,.30)")}if(n.cool<1&&!n.freezing)$(e,"\u5747\u5300\u6D77\u6C34 \xB7 \u7B49\u5F85\u51B7\u5374",(r+p)/2,c+66,"rgba(190,230,238,.58)","center",`600 10px ${R}`);else if(!n.stable&&!n.freezing){let T=(r+p)/2,v=c+Math.min(d*.35,Math.max(36,x*.55)),P=Math.min(56,(p-r)*.17);e.strokeStyle="rgba(255,176,140,.75)",e.lineWidth=1.4;for(let k=0;k<2;k++)e.beginPath(),e.arc(T+(k?P*.7:-P*.7),v,P*.55,.3,Math.PI*1.7),e.stroke(),K(e,T+(k?P*.7:-P*.7)+P*.4,v+P*.3,T+(k?P*.7:-P*.7)+P*.55,v+P*.45,"rgba(255,176,140,.85)",1.4,5);$(e,"\u5BF9\u6D41\u6DF7\u5408",T,v-P*.88,"#ffb08c","center",`600 10px ${R}`)}else n.stable&&!n.freezing&&(e.strokeStyle="rgba(93,224,208,.55)",e.lineWidth=1.2,e.beginPath(),e.moveTo(r+10,c+10),e.lineTo(r+10,m-3),e.stroke(),$(e,"\u51B7\u6C34\u53D8\u8F7B \xB7 \u7A33\u5B9A",(r+p)/2,Math.max(c+60,m-34),"#8fe3b0","center",`600 10px ${R}`));if(n.iceFraction>.01){let T=Math.max(4,y),v=e.createLinearGradient(0,c,0,c+T+6);if(v.addColorStop(0,"rgba(236,253,255,.96)"),v.addColorStop(.55,"rgba(190,240,250,.92)"),v.addColorStop(1,"rgba(111,183,255,.80)"),e.fillStyle=v,e.fillRect(r,c-T,p-r,T),e.strokeStyle="rgba(245,255,255,.92)",e.beginPath(),e.moveTo(r,c-T),e.lineTo(p,c-T),e.stroke(),n.iceIndex>.55){e.fillStyle="rgba(223,250,255,.90)";for(let k=0;k<4;k++){let B=r+(p-r)*(.18+k*.19),J=4+k%2*4;e.beginPath(),e.moveTo(B-9,c-T+1),e.lineTo(B,c-T-J),e.lineTo(B+9,c-T+1),e.closePath(),e.fill()}}let P=8+Math.round((1-n.iceIndex)*8);for(let k=0;k<P;k++){let B=r+20+(k*61+13)%Math.max(20,p-r-40),J=c-T+3+k*17%Math.max(2,T-4);e.beginPath(),e.arc(B,J,1.2+k%3*.45,0,Math.PI*2),e.fillStyle="rgba(39,115,160,.80)",e.fill()}tt(e,`\u6D77\u51B0 \xB7 ${n.iceLabel}`,p-52,c-T-13,"#dffaff")}n.freezing&&$(e,"\u8FBE\u5230\u51B0\u70B9 \xB7 \u5F00\u59CB\u7ED3\u51B0",(r+p)/2,c+d*.55,"rgba(244,254,255,.80)","center",`600 11px ${R}`)}function at(o,n,t=0){let{ctx:e,w:s,h:i}=lt(o);if(s<80||i<80)return;let l=26,a=s-18,r=34,p=i-18,c=Math.min(i*.42,190),f=r+c,d=e.createLinearGradient(0,0,0,r);d.addColorStop(0,"rgba(8,26,42,.95)"),d.addColorStop(1,"rgba(15,54,76,.65)"),e.fillStyle=d,e.fillRect(0,0,s,r),$(e,"\u6D77\u51B0\u5185\u90E8 \xB7 \u5364\u6C34\u6CE1\u4E0E\u6392\u76D0",l,16,"rgba(220,248,255,.75)","left",`600 10px ${R}`);let x=e.createLinearGradient(0,r,0,f);x.addColorStop(0,"rgba(226,250,255,.96)"),x.addColorStop(.55,"rgba(167,226,242,.94)"),x.addColorStop(1,"rgba(100,178,210,.92)"),e.fillStyle=x,e.fillRect(l,r,a-l,c),e.strokeStyle="rgba(245,255,255,.85)",e.strokeRect(l,r,a-l,c);for(let b=0;b<9;b++){let m=l+28+b*89%Math.max(20,a-l-56),M=r+22+b*37%Math.max(20,c-44);e.strokeStyle="rgba(255,255,255,.22)",e.beginPath(),e.moveTo(m-8,M),e.lineTo(m+8,M+4),e.moveTo(m-4,M+8),e.lineTo(m+6,M-7),e.stroke()}let y=Math.round(16-n.age*2.4);for(let b=0;b<y;b++){let m=l+24+(b*83+11)%Math.max(20,a-l-48),M=r+16+(b*29+7)%Math.max(20,c-32),V=4.5+b%3*2.2;e.beginPath(),e.arc(m,M,V,0,Math.PI*2),e.fillStyle="rgba(35,111,160,.82)",e.fill(),e.strokeStyle="rgba(155,226,255,.55)",e.stroke(),b<4&&(e.font=`7px ${H}`,e.fillStyle="rgba(230,252,255,.8)",e.textAlign="center",e.textBaseline="middle",e.fillText("Na\u207A",m,M+.5))}for(let b=0;b<4;b++){let m=l+(a-l)*(.22+b*.18);e.strokeStyle="rgba(255,176,140,.55)",e.setLineDash([3,4]),e.beginPath(),e.moveTo(m,r+c*.35),e.lineTo(m,f+20),e.stroke(),e.setLineDash([]),K(e,m,f+2,m,f+30,"rgba(255,176,140,.8)",1.3,5)}tt(e,`\u51B0\u76D0\u5EA6 ${n.Sice.toFixed(1)} psu`,(l+a)/2,r+22,"#ffc66d"),tt(e,`\u51B0\u9F84 ${n.age.toFixed(1)} \u5E74`,(l+a)/2,r+c-18,"#dffaff");let w=p-f,u=e.createLinearGradient(0,f,0,p);u.addColorStop(0,"rgba(24,92,122,.95)"),u.addColorStop(1,"rgba(7,35,56,.98)"),e.fillStyle=u,e.fillRect(l,f,a-l,w),e.strokeStyle="rgba(160,230,245,.22)",e.beginPath(),e.moveTo(l,f),e.lineTo(a,f),e.stroke();for(let b=0;b<36;b++){let m=l+12+(b*71+19)%Math.max(20,a-l-24),M=f+8+(b*37+9)%Math.max(10,w-16);rt(e,m,M,1.2+b*7%3*.4,"rgba(190,245,255,.40)")}$(e,"\u4E0A\u5C42\u6D77\u6C34",l+10,f+18,"rgba(220,248,255,.72)","left",`600 10px ${R}`),$(e,`S ${n.oceanS.toFixed(2)} psu`,l+10,f+36,"rgba(220,248,255,.55)","left",`9px ${H}`),$(e,`\u76D0\u6790\u4F7F\u4E0A\u5C42\u76D0\u5EA6 +${n.surfaceDelta.toFixed(2)}`,a-10,f+18,"#ffb08c","right",`9px ${R}`),$(e,"\u6392\u76D0 \u2193",(l+a)/2,f+52,"rgba(255,176,140,.75)","center",`600 9px ${R}`);for(let b=0;b<10;b++){let m=(l+(b*97+t*8)%(a-l))%s,M=f+66+b*31%Math.max(10,w-80);e.beginPath(),e.arc(m,M,1.2,0,Math.PI*2),e.fillStyle="rgba(255,198,109,.45)",e.fill()}}var S=o=>document.getElementById(o),g={formationView:S("formation-view"),saltView:S("salt-view"),viewTabs:[...document.querySelectorAll(".view-tab")],columnCanvas:S("column-canvas"),tsCanvas:S("ts-canvas"),densityCanvas:S("density-canvas"),iceCanvas:S("ice-canvas"),iceChartCanvas:S("ice-chart-canvas"),profileCanvas:S("profile-canvas"),chipRegime:S("chip-regime"),chipState:S("chip-state"),stageStamp:S("stage-stamp"),tsNote:S("ts-note"),densityNote:S("density-note"),roTf:S("ro-tf"),roTmax:S("ro-tmax"),roDrho:S("ro-drho"),roHmix:S("ro-hmix"),roIce:S("ro-ice"),roState:S("ro-state"),salinity:S("salinity-slider"),salinityOut:S("salinity-out"),temp:S("temp-slider"),tempOut:S("temp-out"),cool:S("cool-slider"),coolOut:S("cool-out"),play:S("btn-play"),presets:[...document.querySelectorAll(".preset")],outcomeTitle:S("outcome-title"),cardLow:S("card-low"),cardHigh:S("card-high"),explain:S("explain-text"),age:S("age-slider"),ageOut:S("age-out"),chipAge:S("chip-age"),chipSice:S("chip-sice"),barRetained:S("bar-retained"),barRejected:S("bar-rejected"),budgetRetained:S("budget-retained"),budgetRejected:S("budget-rejected"),budgetNote:S("budget-note"),roOceanS:S("ro-ocean-s"),roDs:S("ro-ds"),profileModes:[...document.querySelectorAll(".mode-tab")],profileNote:S("profile-note")},h={view:"formation",S:5,T0:6,cool:0,playing:!1,age:1,profileMode:"observed",lastScene:0},st=new z(g.tsCanvas),ut=new W(g.densityCanvas),Tt=new j(g.iceChartCanvas),yt=new Y(g.profileCanvas);st.onPickS=o=>{h.S=Math.round(o*2)/2,g.salinity.value=String(h.S),E()};var C=(o,n=1)=>o.toFixed(n),Mt=(o,n=2)=>`${o>=0?"+":""}${o.toFixed(n)}`;function Ct(){let n=F(h.S)-.16;return h.T0+h.cool/100*(n-h.T0)}function ct(){return ot(h.S,Ct(),h.T0)}function q(o){h.playing=o,g.play.textContent=o?"\u275A\u275A \u6682\u505C":"\u25B6 \u51B7\u5374"}function E(){let o={...ct(),cool:h.cool};g.salinityOut.textContent=`${C(h.S,1)} psu`,g.tempOut.textContent=`${C(h.T0,1)} \xB0C`,g.coolOut.textContent=`${Math.round(h.cool)}%`,g.chipRegime.textContent=o.regime==="low"?"\u4F4E\u76D0\u5EA6":"\u9AD8\u76D0\u5EA6",g.chipRegime.classList.toggle("coral",o.regime==="high"),g.chipState.textContent=h.cool<1?"\u5F85\u51B7\u5374":o.freezing?"\u7ED3\u51B0\u4E2D":o.stable?"\u7A33\u5B9A\u5206\u5C42":"\u5BF9\u6D41\u6DF7\u5408",g.tsNote.textContent=o.regime==="low"?"T\u03C1max > Tf":"T\u03C1max < Tf",g.densityNote.textContent=o.T>o.tMax?"\u51B7\u5374\u589E\u5BC6":"\u51B7\u5374\u51CF\u5BC6",g.roTf.textContent=`${C(o.tf,2)} \xB0C`,g.roTmax.textContent=`${C(o.tMax,2)} \xB0C`,g.roDrho.textContent=`${Mt(o.dRho,3)} kg/m\xB3`,g.roHmix.textContent=`${Math.round(o.hMix)} m`,g.roIce.textContent=o.iceIndex<.28?"\u8584\u51B0":o.iceIndex<.66?"\u4E2D\u7B49":"\u539A\u51B0",g.roState.textContent=h.cool<1?"\u5F85\u51B7\u5374":o.freezing?"\u7ED3\u51B0":o.stable?"\u7A33\u5B9A":"\u5BF9\u6D41",g.cardLow.classList.toggle("active",o.regime==="low"),g.cardHigh.classList.toggle("active",o.regime==="high"),g.outcomeTitle.textContent=o.regime==="low"?"\u5F53\u524D\uFF1A\u4F4E\u76D0\u5EA6":"\u5F53\u524D\uFF1A\u9AD8\u76D0\u5EA6",h.cool<1?(g.explain.textContent=`\u521D\u59CB\u6D77\u6C34\u6E29\u5EA6 ${C(h.T0,1)}\xB0C\uFF0C\u5C1A\u672A\u51B7\u5374\u3002\u628A\u201C\u51B7\u5374\u8FDB\u5EA6\u201D\u5411\u53F3\u62D6\uFF0C\u89C2\u5BDF\u8868\u5C42\u53D8\u51B7\u540E\u662F\u7EE7\u7EED\u6DF7\u5408\uFF0C\u8FD8\u662F\u5F62\u6210\u7A33\u5B9A\u8584\u5C42\u3002`,g.stageStamp.textContent="\u62D6\u52A8\u201C\u51B7\u5374\u8FDB\u5EA6\u201D"):o.freezing?(g.explain.textContent=o.regime==="low"?`S=${C(h.S,1)}\uFF0C\u7A33\u5B9A\u8868\u5C42\u5DF2\u5230\u51B0\u70B9 ${C(o.tf,2)}\xB0C\u3002\u53EA\u6709\u8584\u8584\u7684\u8868\u5C42\u53C2\u4E0E\u7ED3\u51B0\uFF0C\u6240\u4EE5\u51B0\u5C42\u8584\uFF0C\u63A5\u8FD1\u6DE1\u6C34\u7ED3\u51B0\u3002`:`S=${C(h.S,1)}\uFF0C\u6DF7\u5408\u5C42\u5DF2\u5230\u51B0\u70B9 ${C(o.tf,2)}\xB0C\u3002\u5BF9\u6D41\u628A\u6574\u5C42\u6C34\u5E26\u5230\u51B0\u70B9\uFF0C\u51B0\u5C42\u503E\u5411\u66F4\u539A\u3002`,g.stageStamp.textContent="\u7ED3\u51B0 \xB7 \u76D0\u6790\u5F00\u59CB"):o.T>o.tMax?(g.explain.textContent=o.regime==="low"?`S=${C(h.S,1)}\uFF0C\u8FD8\u9AD8\u4E8E\u6700\u5927\u5BC6\u5EA6\u6E29\u5EA6 ${C(o.tMax,2)}\xB0C\u3002\u8868\u5C42\u51B7\u5374\u540E\u53D8\u91CD\uFF0C\u548C\u4E0B\u5C42\u6DF7\u5408\uFF0C\u6DF7\u5408\u5C42\u52A0\u6DF1\u3002`:`S=${C(h.S,1)}\uFF0C\u8FDC\u9AD8\u4E8E\u6700\u5927\u5BC6\u5EA6\u6E29\u5EA6 ${C(o.tMax,2)}\xB0C\u3002\u51B7\u5374\u4E00\u76F4\u589E\u5BC6\uFF0C\u8868\u5C42\u65E0\u6CD5\u7A33\u5B9A\uFF0C\u6301\u7EED\u5BF9\u6D41\u6DF7\u5408\u3002`,g.stageStamp.textContent="\u51B7\u5374 \xB7 \u6DF7\u5408\u5C42\u52A0\u6DF1"):(g.explain.textContent=`\u5DF2\u8D8A\u8FC7\u6700\u5927\u5BC6\u5EA6\u6E29\u5EA6 ${C(o.tMax,2)}\xB0C\u3002\u7EE7\u7EED\u51B7\u5374\u65F6\u8868\u5C42\u5BC6\u5EA6\u53CD\u800C\u51CF\u5C0F\uFF0C\u51B7\u6C34\u53D8\u8F7B\u5E76\u7A33\u5B9A\u6D6E\u5728\u4E0B\u9762\uFF0C\u5F62\u6210\u8584\u800C\u7A33\u5B9A\u7684\u51B7\u8868\u5C42\u3002`,g.stageStamp.textContent="\u7A33\u5B9A\u51B7\u8868\u5C42"),st.draw(o),ut.draw(o),et(g.columnCanvas,o,performance.now()/1e3)}function O(){let o=nt(34,1,60,h.age),n=34+o.surfaceDeltaS;g.ageOut.textContent=`${C(h.age,1)} \u5E74`,g.chipAge.innerHTML=`\u51B0\u9F84 <b>${C(h.age,1)} \u5E74</b>`,g.chipSice.innerHTML=`\u51B0\u76D0\u5EA6 <b>${C(o.Sice,1)} psu</b>`,g.barRetained.style.width=`${(o.retainedSalt*100).toFixed(1)}%`,g.barRejected.style.width=`${(o.rejectedSalt*100).toFixed(1)}%`,g.budgetRetained.textContent=`${(o.retainedSalt*100).toFixed(0)}%`,g.budgetRejected.textContent=`${(o.rejectedSalt*100).toFixed(0)}%`,g.roOceanS.textContent=`${C(n,2)} psu`,g.roDs.textContent=`+${C(o.surfaceDeltaS,2)}`,g.budgetNote.textContent=o.Sice<4?"\u591A\u5E74\u51B0\u7684\u5364\u6C34\u6CE1\u66F4\u5C11\uFF0C\u51B0\u76D0\u5EA6\u66F4\u4F4E\uFF0C\u5269\u4E0B\u7684\u76D0\u5927\u591A\u5DF2\u7ECF\u6392\u5165\u6D77\u6C34\u3002":"\u51B0\u76D0\u5EA6\u8FDC\u4F4E\u4E8E\u6D77\u6C34\uFF0C\u5927\u90E8\u5206\u76D0\u88AB\u6392\u51FA\uFF0C\u8FDB\u5165\u4E0A\u5C42\u6D77\u6C34\uFF1B\u51B0\u9F84\u8D8A\u5927\uFF0C\u6392\u76D0\u8D8A\u5145\u5206\u3002",Tt.draw(h.age),at(g.iceCanvas,{age:h.age,Sice:o.Sice,oceanS:n,surfaceDelta:o.surfaceDeltaS},performance.now()/1e3),ft()}function ft(){yt.draw(h.profileMode);let o={observed:"60\xB0S \u89C2\u6D4B\u5256\u9762\u8868\u5C42\u6DE1\u3001\u6DF1\u5C42\u54B8\uFF0C\u662F\u878D\u51B0\u6DE1\u6C34\u3001\u964D\u6C34\u3001\u7ED3\u51B0\u6392\u76D0\u548C\u6DF7\u5408\u5171\u540C\u4F5C\u7528\u7684\u7ED3\u679C\u3002\u5B83\u4E0D\u80FD\u7B80\u5355\u89E3\u91CA\u4E3A\u201C\u76D0\u6790\u9020\u6210\u201D\u3002",freezing:"\u7ED3\u51B0\u671F\uFF1A\u76D0\u6790\u4F7F\u8868\u5C42\u76D0\u5EA6\u5347\u9AD8\u3001\u5BC6\u5EA6\u589E\u5927\uFF0C\u53EF\u80FD\u89E6\u53D1\u5BF9\u6D41\uFF1B\u4E0A\u5C42\u76D0\u5EA6\u5256\u9762\u8D8B\u4E8E\u5747\u5300\uFF0C\u76D0\u8DC3\u5C42\u51CF\u5F31\u3002",melting:"\u878D\u5316\u671F\uFF1A\u6D77\u51B0\u878D\u5316\u548C\u964D\u6C34\u628A\u6DE1\u6C34\u52A0\u5230\u8868\u5C42\uFF0C\u8868\u5C42\u53D8\u6DE1\u3001\u5C42\u7ED3\u66F4\u7A33\u5B9A\uFF0C\u76D0\u8DC3\u5C42\u589E\u5F3A\u3002"};g.profileNote.textContent=o[h.profileMode]}function Pt(o){h.view=o,g.formationView.hidden=o!=="formation",g.saltView.hidden=o!=="salt",g.viewTabs.forEach(n=>n.classList.toggle("active",n.dataset.view===o)),o==="formation"?E():O()}function vt(o){o==="low"?(h.S=5,h.T0=6):o==="critical"?(h.S=Math.round(I*2)/2,h.T0=4):(h.S=33,h.T0=6),h.cool=0,g.salinity.value=String(h.S),g.temp.value=String(h.T0),g.cool.value="0",q(!1),E()}function gt(o){h.playing?(h.cool=Math.min(100,h.cool+.8),g.cool.value=String(Math.round(h.cool)),E(),h.cool>=100&&q(!1)):o-h.lastScene>90&&(h.view==="formation"?et(g.columnCanvas,{...ct(),cool:h.cool},o/1e3):O(),h.lastScene=o),requestAnimationFrame(gt)}function kt(){g.viewTabs.forEach(n=>n.addEventListener("click",()=>Pt(n.dataset.view))),g.play.addEventListener("click",()=>{h.cool>=100&&(h.cool=0),q(!h.playing)}),g.salinity.addEventListener("input",()=>{h.S=Number(g.salinity.value),E()}),g.temp.addEventListener("input",()=>{h.T0=Number(g.temp.value),E()}),g.cool.addEventListener("input",()=>{h.cool=Number(g.cool.value),q(!1),E()}),g.presets.forEach(n=>n.addEventListener("click",()=>vt(n.dataset.preset))),g.age.addEventListener("input",()=>{h.age=Number(g.age.value),O()}),g.profileModes.forEach(n=>n.addEventListener("click",()=>{h.profileMode=n.dataset.mode,g.profileModes.forEach(t=>t.classList.toggle("active",t.dataset.mode===h.profileMode)),ft()}));let o=()=>{h.view==="formation"?E():O()};window.addEventListener("resize",o),E(),O(),requestAnimationFrame(gt)}kt();})();
+</script>
+</body>
+</html>
